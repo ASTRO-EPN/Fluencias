@@ -1,0 +1,235 @@
+# El siguiente código fue desarrollado para la elaboración de histogramas de astropartículas 
+
+#*******************************************
+#HISTOGRAMAS COMPLETOS (TODAS LAS PARTÍCULAS) 
+#******************************************* 
+
+
+import pandas as pd 
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+
+datos = pd.read_csv ("/content/colab_M1/MyDrive/colab_M1//bkg_laplata.dat", sep=" ") #aqui colocas el nombre del archivo
+
+#COMIENZA EL PLOT Y LOS HISTOGRAMAS.
+#datos['E'].plot.hist(bins=50)  #este plotea el histograma crudito,sin distinguir la particula
+
+dataframe = datos.pivot(columns='particula', values='E') #la funcion .pivot sirve para seleccionar que quiero plotear como histograma
+#dataframe.head(n=3)
+dataframe.plot.hist(bins=(10 ** np.linspace(np.log10(1e-4), np.log10(1e3), 100)),
+                    figsize=(15,10), linewidth = 2, histtype=u'step',
+                    alpha= 1) 
+
+
+font1 = {'family':'serif','color':'black','size':18}
+font2 = {'family':'serif','color':'black','size':14}
+
+plt.title('Flujo de partículas generadas por el BKG en la Plata (6 h de observación)',
+          fontdict = font1, fontstyle="oblique")
+
+plt.xlabel ("Energía [GeV]",fontdict= font2)
+plt.ylabel ("Flujo de Partículas",fontdict= font2)
+plt.yscale("log")
+plt.xscale("log") 
+
+plt.tick_params(axis='x', labelsize=14)
+plt.tick_params(axis='y', labelsize=14)
+
+
+plt.legend(["$\gamma$","$e^{+}$","$e^{-}$"," ","$\mu^{+}$","$\mu^{-}$","$\pi^{+}$","$\pi^{-}$"]); #verificar identidad de particulas
+
+images_dir = '/content/colab_M1/MyDrive/colab_M1/'
+plt.savefig(f"{images_dir}/bkg_la_plata.png")
+plt.show()      
+
+
+#********************************************
+#HISTOGRAMA POR PARTÍCULA (UN SOLO TÍPO DE PARTÍCULA) 
+#********************************************
+
+import pandas as pd 
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+from matplotlib.pyplot import hist
+from matplotlib.colors import LogNorm 
+
+font1 = {'family':'serif','color':'black','size':18}
+font2 = {'family':'serif','color':'black','size':14}
+
+datos = pd.read_csv ("/content/colab_M1/MyDrive/colab_M1/teleferico/fotones_teleferico.dat", sep=" ")
+
+
+piones = datos.loc[datos["particula" ]== 99]
+E = piones ["E"] 
+
+
+piones_m1 = datos.loc[datos["particula" ]== 1]
+E_m1 = piones_m1 ["E"] 
+
+contar = datos.groupby(["particula"]).count() 
+print(contar)
+
+plt.figure(figsize=(15,10))
+
+hist(piones.E, weights=piones.particula, bins=(10 ** np.linspace(np.log10(1e-4),
+     np.log10(1e3), 100)), linewidth = 1.5, histtype=u'step', color="indigo",
+     alpha= 1)
+
+#hist(piones_m1.E, weights=piones_m1.particula, bins=(10 ** np.linspace(np.log10(1e-4),
+ #    np.log10(1e3), 100)), linewidth = 1, histtype=u'stepfilled', 
+  #   alpha= 0.85, color="lime")
+
+# This is  the colormap I'd like to use.
+cm = plt.cm.get_cmap('inferno')
+
+# Plot histogram.
+n,bins,  patches = plt.hist(piones_m1.E, weights=piones_m1.particula, 
+                            bins=(10 ** np.linspace(np.log10(1e-4),np.log10(1e3), 100)), 
+                      linewidth = 1, histtype=u'bar',  alpha=1 )
+
+bin_centers = (bins[1:]+bins[:-1])*0.5
+# scale values to interval [0,1]
+#col = max(bin_centers) - min(bin_centers)
+col = np.log(bin_centers)- np.log(max(bin_centers))
+col /= min(col)
+
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Flujo de $\gamma$ emitidos por M1 y el BKG (6 horas de observación) - Teleférico',
+          fontdict = font1, fontstyle="oblique")
+plt.yscale("log")
+plt.xscale("log")
+
+plt.tick_params(axis='x', labelsize=14)
+plt.tick_params(axis='y', labelsize=14)
+
+plt.xlabel ("Energía [GeV]",fontdict= font2 )
+plt.ylabel ("Flujo de Partículas",fontdict= font2 ) 
+plt.legend(["$\gamma$ M1","$\gamma$ BKG"]);
+
+
+images_dir = '/content/colab_M1/MyDrive/colab_M1/teleferico'
+plt.savefig(f"{images_dir}/fotones_teleferico.png")
+plt.show()  
+
+#************************************
+#ESTADÍSTICAS DE LAS PARTÍCULAS (ENERGÍA, VALORES MEDIOS, CONTEOS) 
+#************************************ 
+
+
+import pandas as pd
+import io 
+
+
+datos = pd.read_csv ("/content/colab_M1/MyDrive/colab_M1/e/bkg_coaque.dat", sep=" ")
+
+
+
+promedio = datos.groupby(["particula"]).mean() #entrega los valores promedio de la columna particula
+print("promedio   E (GeV)")
+print(promedio)
+
+
+contar = datos.groupby(["particula"]).count()   #entrega el numero de prticulas 1,2,3...etc. 
+print ("Promedio de partícualas")
+print(contar) 
+
+print (datos["particula"]) 
+
+#************************************
+#PLOT AREA DE DETECCIÓN 
+#************************************* 
+
+import pandas as pd 
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+from scipy.stats import gaussian_kde
+from scipy.stats import kde
+
+font1 = {'family':'serif','color':'black','size':18}
+font2 = {'family':'serif','color':'black','size':14}
+
+datos1 = pd.read_csv ("/content/colab_M1/MyDrive/colab_M1/shower_coaque.dat", sep=" ")
+datos2 = pd.read_csv ("/content/colab_M1/MyDrive/colab_M1/shower_teleferico.dat", sep=" ")
+
+
+rx1 = datos1["rx"]
+ry1 = datos1["ry"]
+E1 = datos1["E"]
+
+rx2 = datos2["rx"]
+ry2 = datos2["ry"] 
+E2 = datos2 ["E"] 
+
+
+"""
+plt.figure(figsize=(15,10))
+
+#plt.scatter(rx1,ry1,marker='o',facecolors="green",s=1)
+#plt.pcolormesh(rx1, ry1, Z, shading='auto')
+graph = plt.contourf(rx1, ry1, Z, 500, cmap="jet", LineSpec="Dotted line", LineWidth = 3, c=E1);
+cb = plt.colorbar(graph)
+cb.set_label('Energy value [GeV]')
+
+
+plt.title('Área efectiva - Coaque (0 msnm)',
+          fontdict = font1, fontstyle="oblique")
+
+plt.xlabel ("rx [km]",fontdict= font2 )
+plt.ylabel ("ry [km]",fontdict= font2 ) 
+"""
+
+"""
+plt.figure(figsize=(15,10))
+
+X, Y = np.meshgrid(rx2, ry2)
+
+Z = f(X,Y)
+
+graph = plt.contourf(rx2, ry2, Z, 50, cmap="inferno", LineSpec="Dotted line", LineWidth = 3, c=E1);
+cb = plt.colorbar(graph)
+cb.set_label('Energy value')
+
+
+plt.title('Área efectiva - Teleférico (4020 msnm)',
+          fontdict = font1, fontstyle="oblique")
+
+plt.xlabel ("rx [km]",fontdict= font2 )
+plt.ylabel ("ry [km]",fontdict= font2 ) 
+
+"""
+
+
+"""
+images_dir = '/content/colab_M1/MyDrive/colab_M1/coaque'
+plt.savefig(f"{images_dir}/gammas_paper2.png")
+plt.show() 
+""" 
+
+x = rx2
+y = ry2
+nbins=300
+k = kde.gaussian_kde([x,y])
+xi, yi = np.mgrid[x.min():x.max():nbins*1j, y.min():y.max():nbins*1j]
+zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+ 
+plt.figure(figsize=(15,10))
+
+plt.tick_params(axis='x', labelsize=14)
+plt.tick_params(axis='y', labelsize=14)
+
+graph = plt.pcolormesh(xi, yi, zi.reshape(xi.shape) ,shading='auto', cmap="inferno")
+plt.title("Dispersión de Astropartículas Secundarias generadas por un $\gamma$ de 2 TeV \n en la superficie de detección- Teleférico (4020 msnm)",
+          fontdict = font1, fontstyle="oblique")
+
+
+plt.xlabel ("$r_{x}$ [m]",fontdict= font2 )
+plt.ylabel ("$r_{y}$ [m]",fontdict= font2 ) 
+cb = plt.colorbar(graph)
+cb.set_label('Densidad de Energía [TeV/$m^{2}$]',fontdict= font2  )
+images_dir = '/content/colab_M1/MyDrive/colab_M1/'
+plt.savefig(f"{images_dir}/area_teleferico.png")
